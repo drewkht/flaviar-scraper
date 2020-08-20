@@ -34,14 +34,11 @@ let bottlesArray = bottlesElements.get().map((bottle) => {
   };
 });
 
-/**
- * @type {Array<Bottle>} bottles
- */
 let bottles = bottlesArray.map((bottle) => {
   // navigate to bottle.href
   // load cheerio with page HTML
   const $$ = cheerio.load(
-    fs.readFileSync(path.resolve(`data/bottle.html`)).toString()
+    fs.readFileSync(path.resolve(`data/aberlour.html`)).toString()
   );
 
   let style = $$.root().find('div.title:contains(Style)').next().text().trim();
@@ -78,10 +75,12 @@ let bottles = bottlesArray.map((bottle) => {
 
   let age = $$.root().find('div.title:contains(Age)').next().text().trim();
 
-  let { ratingCount: totalVotes, reviewCount: reviews } = JSON.parse(
-    $$.root().find('script:contains(aggregateRating)').html()
-  ).aggregateRating;
+  let ratingData =
+    JSON.parse($.root().find('script:contains(aggregateRating)')?.html())
+      ?.aggregateRating ?? null;
 
+  let totalVotes = ratingData?.ratingCount || 0;
+  let reviews = ratingData?.reviewCount || 0;
   let ratings = totalVotes - reviews;
 
   let flavorSpiral = $$.root()
@@ -94,31 +93,36 @@ let bottles = bottlesArray.map((bottle) => {
       flavor: $$(div).text().trim(),
     }));
 
-  let tastingNotes = $$.root()
+  let tastingNotes = $.root()
     .find('#tasting-notes')
     .text()
     .replace(/ {2,}/g, ' ')
     .replace(/\./g, '');
 
-  let appearance = tastingNotes
-    .match(/(?<=Appearance \/ Color)[\s\S]*(?=Smell \/ Nose \/ Aroma)/)[0]
-    .trim()
-    .replace('\n', '');
+  let appearance = tastingNotes.match(
+    /(?<=Appearance \/ Color)[\s\S]*(?=Smell \/ Nose \/ Aroma)|(?<=Appearance \/ Color)[\s\S]*(?=Nose \/ Aroma \/ Smell)/
+  );
 
-  let smell = tastingNotes
-    .match(/(?<=Smell \/ Nose \/ Aroma)[\s\S]*(?=Flavor \/ Taste \/ Palate)/)[0]
-    .trim()
-    .replace('\n', '');
+  if (Array.isArray(appearance) && appearance.length)
+    appearance[0].trim().replace('\n', '');
 
-  let flavor = tastingNotes
-    .match(/(?<=Flavor \/ Taste \/ Palate)[\s\S]*(?=Finish)/)[0]
-    .trim()
-    .replace('\n', '');
+  let smell = tastingNotes.match(
+    /(?<=Smell \/ Nose \/ Aroma)[\s\S]*(?=Flavor \/ Taste \/ Palate)|(?<=Nose \/ Aroma \/ Smell)[\s\S]*(?=Flavor \/ Taste \/ Palate)/
+  );
 
-  let finish = tastingNotes
-    .match(/(?<=Finish)[\s\S]*/)[0]
-    .trim()
-    .replace('\n', '');
+  if (Array.isArray(smell) && smell.length) smell[0].trim().replace('\n', '');
+
+  let flavor = tastingNotes.match(
+    /(?<=Flavor \/ Taste \/ Palate)[\s\S]*(?=Finish)/
+  );
+
+  if (Array.isArray(flavor) && flavor.length)
+    flavor[0].trim().replace('\n', '');
+
+  let finish = tastingNotes.match(/(?<=Finish)[\s\S]*/);
+
+  if (Array.isArray(finish) && finish.length)
+    finish[0].trim().replace('\n', '');
 
   return {
     ...bottle,
@@ -141,6 +145,8 @@ let bottles = bottlesArray.map((bottle) => {
     },
   };
 });
+
+console.log(bottles);
 
 /**
  * Object representing all the data on one bottle in Flaviar's web store
