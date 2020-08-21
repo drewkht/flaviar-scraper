@@ -10,7 +10,7 @@ require('dotenv').config();
 // Set environment variable defaults
 const LOCAL_MODE = process.env.LOCAL_MODE || false;
 const STORE_HTML = process.env.STORE_HTML || true;
-const NUM_BOTTLES = process.env.NUM_BOTTLES || 5;
+const NUM_BOTTLES = process.env.NUM_BOTTLES || 20;
 const WRITE_TO_JSON = process.env.WRITE_TO_JSON || false;
 const USE_CACHE = process.env.USE_CACHE || true;
 
@@ -190,19 +190,19 @@ const USE_CACHE = process.env.USE_CACHE || true;
         ?.match(/(?<=\().*(?=,)/)?.[0]
         ?.trim();
 
-      let distillery = $.root()
+      const distillery = $.root()
         .find('div.title:contains(Distillery)')
         ?.next()
-        ?.text();
-
-      distillery = distillery.trim();
-      distillery = distillery.replace(/(?:\n|\\n) *>*/g, '');
+        ?.text()
+        ?.trim()
+        .replace(/(?:\n|\\n) *>*/g, '');
 
       const age = $.root()
         .find('div.title:contains(Age)')
         ?.next()
         ?.text()
-        ?.trim();
+        ?.trim()
+        .replace(/(?:\n|\\n) *>*/g, '');
 
       const ratingData = JSON.parse(
         $.root().find('script:contains(aggregateRating)')?.html()
@@ -314,6 +314,19 @@ const USE_CACHE = process.env.USE_CACHE || true;
       });
     }
 
+    let output = Constants.HEADERS.concat(
+      '\n',
+      bottles.map((bottle) => flattenObjValues(bottle)).join('\n')
+    );
+
+    fs.writeFile('/mnt/c/Users/drewi/Desktop/output.txt', output, (err) => {
+      if (err) console.error(err);
+      else
+        console.log(
+          `Successfully wrote ${bottles.length} bottles to output.txt`
+        );
+    });
+
     fs.writeFile(
       './output.json',
       JSON.stringify(bottles, null, '\t'),
@@ -332,3 +345,11 @@ const USE_CACHE = process.env.USE_CACHE || true;
     if (browser) await browser.close();
   }
 })();
+
+function flattenObjValues(obj) {
+  return Object.values(obj)
+    .map((val) => {
+      return typeof val !== 'object' ? val : flattenObjValues(val);
+    })
+    .join('\t');
+}
