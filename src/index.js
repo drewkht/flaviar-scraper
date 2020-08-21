@@ -10,7 +10,7 @@ require('dotenv').config();
 // Set environment variable defaults
 const LOCAL_MODE = process.env.LOCAL_MODE || false;
 const STORE_HTML = process.env.STORE_HTML || true;
-const NUM_BOTTLES = process.env.NUM_BOTTLES || 20;
+const NUM_BOTTLES = process.env.NUM_BOTTLES || 0;
 const WRITE_TO_JSON = process.env.WRITE_TO_JSON || false;
 const USE_CACHE = process.env.USE_CACHE || true;
 
@@ -161,26 +161,22 @@ const USE_CACHE = process.env.USE_CACHE || true;
       const $ = cheerio.load(html);
 
       const style = $.root()
-        .find('div.title:contains(Style)')
-        ?.next()
+        .find('div.title:contains(Style)+div.value')
         ?.text()
         ?.trim();
 
       const region = $.root()
-        .find('div.title:contains(Region)')
-        ?.next()
+        .find('div.title:contains(Region)+div.value')
         ?.text()
         ?.trim();
 
       const country = $.root()
-        .find('div.title:contains(Country)')
-        ?.next()
+        .find('div.title:contains(Country)+div.value')
         ?.text()
         ?.trim();
 
       const alcoholPercent = $.root()
-        .find('div.title:contains(Alcohol)')
-        ?.next()
+        .find('div.title:contains(Alcohol)+div.value')
         ?.text()
         ?.trim();
 
@@ -191,18 +187,31 @@ const USE_CACHE = process.env.USE_CACHE || true;
         ?.trim();
 
       const distillery = $.root()
-        .find('div.title:contains(Distillery)')
-        ?.next()
+        .find('div.title:contains(Distillery)+div.value')
         ?.text()
         ?.trim()
         .replace(/(?:\n|\\n) *>*/g, '');
 
       const age = $.root()
-        .find('div.title:contains(Age)')
-        ?.next()
+        .find('div.title:contains(Age)+div.value')
         ?.text()
         ?.trim()
         .replace(/(?:\n|\\n) *>*/g, '');
+
+      const singleCask = $.root()
+        .find('div.title:contains(Single Cask)+div.value')
+        ?.text()
+        ?.trim();
+
+      const maturation = $.root()
+        .find('div.title:contains(Maturation)+div.value')
+        ?.text()
+        ?.trim();
+
+      const chillFiltered = $.root()
+        .find('.div.title:contains(Chill Filtered)+div.value')
+        ?.text()
+        ?.trim();
 
       const ratingData = JSON.parse(
         $.root().find('script:contains(aggregateRating)')?.html()
@@ -300,6 +309,9 @@ const USE_CACHE = process.env.USE_CACHE || true;
         alcoholPercent,
         volume,
         age,
+        singleCask,
+        maturation,
+        chillFiltered,
         totalRatings,
         reviewRatings,
         nonReviewRatings,
