@@ -109,7 +109,7 @@ $RECYCLE.BIN/
 *.lnk
 
 ### Custom ###
-# Credentials file
-creds.js
+output.json
+bottlesArray.json
 
 # End of https://www.gitignore.io/api/node,windows,visualstudiocode
